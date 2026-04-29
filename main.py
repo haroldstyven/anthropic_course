@@ -30,15 +30,16 @@ def chat(messages):
 
 messages = []
 
-add_usser_message(messages, "What is the capital of Colombia?")
+while True:
+    user_input = input("> ")
+    print(">", user_input)
 
-answer = chat(messages)
+    add_usser_message(messages, user_input)
 
-add_assistant_message(messages, answer)
+    answer = chat(messages)
 
-add_usser_message(messages, "Write another sentence")
+    add_assistant_message(messages, answer)
 
-answer = chat(messages)
-
-
-print(messages)
+    print("---")
+    print(answer)
+    print("---")
