@@ -97,6 +97,11 @@ with client.messages.stream(
 stream.get_response_text()
 """
 
+prompt = """
+Generate three differents sample AWS CLI commands. Each should be very shot.
+"""
+
+"""
 # Structured data - controlling output
 
 add_usser_message(messages, "Generate a very short event bridge rule as json")
@@ -111,12 +116,9 @@ print(rule)
 
 # other example
 
-prompt = """
-Generate three differents sample AWS CLI commands. Each should be very shot.
-"""
-
 add_usser_message(messages, prompt)
 add_assistant_message(messages, "Here are all three commands in a single block without any comments:\n ```bash")
 
 text = chat(messages, stop_sequence=["```"])
 print(text.strip())
+"""
