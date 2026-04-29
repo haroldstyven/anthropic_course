@@ -108,3 +108,15 @@ print(text)
 
 rule = json.loads(text.strip())
 print(rule)
+
+# other example
+
+prompt = """
+Generate three differents sample AWS CLI commands. Each should be very shot.
+"""
+
+add_usser_message(messages, prompt)
+add_assistant_message(messages, "Here are all three commands in a single block without any comments:\n ```bash")
+
+text = chat(messages, stop_sequence=["```"])
+print(text.strip())
