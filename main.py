@@ -72,7 +72,24 @@ answer = chat(messages)
 print(answer)
 """
 
+"""
 # Temperature
 add_usser_message(messages, "Generate a idea for a movie.")
 answer = chat(messages, temperature=0.0)
 print(answer)
+"""
+
+# Streaming
+add_usser_message(messages, "Writing a 1 sentence description of a fake database.")
+
+with client.messages.stream(
+    model=model,
+    max_tokens=1000,
+    messages=messages,
+    temperature=0.5,
+) as stream:
+    for text in stream.text_stream:
+        #print(text, end="")
+        pass
+
+stream.get_response_text()
