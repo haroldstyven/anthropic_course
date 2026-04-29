@@ -20,16 +20,23 @@ def add_assistant_message(message, text):
     }
     message.append(assistant_message)
 
-def chat(messages):
-    message = client.messages.create(
-        model=model,
-        max_tokens=1000,
-        messages=messages
-    )
+def chat(messages, system=None):
+    params = {
+        "model": model,
+        "max_tokens": 1000,
+        "messages": messages
+    }
+
+    if system:
+        params["system"] = system
+
+    message = client.messages.create(**params)
     return message.content[0].text
 
 messages = []
 
+"""
+# Conversation multiturno
 while True:
     user_input = input("> ")
     print(">", user_input)
@@ -43,3 +50,21 @@ while True:
     print("---")
     print(answer)
     print("---")
+"""
+
+# System prompt
+system = """
+You are a patient math tutor.
+Do not directly answer a student's questions.
+Guide them to a solution step by step.
+"""
+
+# With system prompt
+add_usser_message(messages, "How do I solved 5x+3=2 for x?")
+answer = chat(messages, system)
+print(answer)
+
+# Without system prompt
+add_usser_message(messages, "How do I solved 5x+3=2 for x?")
+answer = chat(messages)
+print(answer)
