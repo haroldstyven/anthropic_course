@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from anthropic import Anthropic
+import json
 
 load_dotenv()
 
@@ -79,6 +80,7 @@ answer = chat(messages, temperature=0.0)
 print(answer)
 """
 
+"""
 # Streaming
 add_usser_message(messages, "Writing a 1 sentence description of a fake database.")
 
@@ -93,3 +95,16 @@ with client.messages.stream(
         pass
 
 stream.get_response_text()
+"""
+
+# Structured data - controlling output
+
+add_usser_message(messages, "Generate a very short event bridge rule as json")
+add_assistant_message(messages, "```json")
+
+text = chat(messages, stop_sequenc=["```"])
+
+print(text)
+
+rule = json.loads(text.strip())
+print(rule)
