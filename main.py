@@ -20,11 +20,12 @@ def add_assistant_message(message, text):
     }
     message.append(assistant_message)
 
-def chat(messages, system=None):
+def chat(messages, system=None, temperature=0.5):
     params = {
         "model": model,
         "max_tokens": 1000,
-        "messages": messages
+        "messages": messages,
+        "temperature": temperature
     }
 
     if system:
@@ -59,6 +60,7 @@ Do not directly answer a student's questions.
 Guide them to a solution step by step.
 """
 
+"""
 # With system prompt
 add_usser_message(messages, "How do I solved 5x+3=2 for x?")
 answer = chat(messages, system)
@@ -67,4 +69,10 @@ print(answer)
 # Without system prompt
 add_usser_message(messages, "How do I solved 5x+3=2 for x?")
 answer = chat(messages)
+print(answer)
+"""
+
+# Temperature
+add_usser_message(messages, "Generate a idea for a movie.")
+answer = chat(messages, temperature=0.0)
 print(answer)
