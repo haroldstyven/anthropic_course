@@ -156,7 +156,7 @@ def generate_dataset():
     Please generate 3 objects.
     """
 
-    add_usser_message(messages, prompt)
+    add_user_message(messages, prompt)
     add_assistant_message(messages, "```json")
 
     text = chat(messages, stop_sequence=["```"])
@@ -213,7 +213,7 @@ def run_prompt(test_case):
     """
     
     messages = []
-    add_usser_message(messages, prompt)
+    add_user_message(messages, prompt)
     add_assistant_message(messages, "```code")
 
     output = chat(messages, stop_sequence=["```"])
@@ -248,7 +248,7 @@ def grade_by_model(test_case, output):
     """
     
     messages = []
-    add_usser_message(messages, eval_prompt)
+    add_user_message(messages, eval_prompt)
     add_assistant_message(messages, "```json")
     
     eval_text = chat(messages, stop_sequences=["```"])
