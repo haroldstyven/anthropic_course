@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 from anthropic import Anthropic
 import json
 from statistics import mean
+import ast
+import re
 
 load_dotenv()
 
@@ -128,25 +130,25 @@ print(text.strip())
 
 def generate_dataset():
     prompt = """
-Generate a evaluation dataset for a prompt evaluation. The dataset will be used to evaluate prompts
-that generate Python, JSON, or Regex specifically for AWS-related tasks. Generate an array of JSON objects,
-each representing task that requires Python, JSON, or a Regex to complete.
+    Generate a evaluation dataset for a prompt evaluation. The dataset will be used to evaluate prompts
+    that generate Python, JSON, or Regex specifically for AWS-related tasks. Generate an array of JSON objects,
+    each representing task that requires Python, JSON, or a Regex to complete.
 
-Example output:
-```json
-[
-    {
-        "task": "Description of task",
-    },
-    ...additional
-]
-```
+    Example output:
+    ```json
+    [
+        {
+            "task": "Description of task",
+        },
+        ...additional
+    ]
+    ```
 
-* Focus on tasks that can be solved by writing a single Python function, a single JSON object, or a regular expression.
-* Focus on tasks that do not require writing much code
+    * Focus on tasks that can be solved by writing a single Python function, a single JSON object, or a regular expression.
+    * Focus on tasks that do not require writing much code
 
-Please generate 3 objects.
-"""
+    Please generate 3 objects.
+    """
 
     add_usser_message(messages, prompt)
     add_assistant_message(messages, "```json")
@@ -161,6 +163,37 @@ with open("dataset.json", "w") as f:
     json.dump(dataset, f, indent=2)
 """
 
+def validate_json(text):
+    try:
+        json.loads(text.strip())
+        return 10
+    except json.JSONDecodeError:
+        return 0
+
+def validate_python(text):
+    try:
+        ast.parse(text.strip())
+        return 10
+    except SyntaxError:
+        return 0
+
+def validate_regex(text):
+    try:
+        re.compile(text.strip())
+        return 10
+    except re.error:
+        return 0
+
+def grade_syntax(response, test_case):
+    format = test_case["format"]
+
+    if format == "python":
+        return validate_python(response)
+    elif format == "json":
+        return validate_json(response)
+    else:
+        return validate_regex(response)
+
 # Running the eval
 def run_prompt(test_case):
     """Merges the prompt and test case input, then returns the result"""
@@ -168,11 +201,16 @@ def run_prompt(test_case):
     Please solve the following task:
 
     {test_case["task"]}
+
+    * Respond only with Python, JSON, or a plain Regex
+    * Do not add any comments or commentary or explanation
     """
     
     messages = []
     add_usser_message(messages, prompt)
-    output = chat(messages)
+    add_assistant_message(messages, "```code")
+
+    output = chat(messages, stop_sequence=["```"])
     return output
 
 def grade_by_model(test_case, output):
@@ -202,8 +240,12 @@ def run_test_case(test_case):
     
     # Grade the output
     model_grade = grade_by_model(test_case, output)
-    score = model_grade["score"]
+    model_score = model_grade["score"]
     reasoning = model_grade["reasoning"]
+
+    syntax_score = grade_syntax(output, test_case)
+
+    score = (model_score + syntax_score) / 2
     
     return {
         "output": output, 
