@@ -139,6 +139,8 @@ def generate_dataset():
     [
         {
             "task": "Description of task",
+            "format": "python" or "json" or "regex",
+            "solution_criteria": "Key criteria for evaluating the solution"
         },
         ...additional
     ]
@@ -218,9 +220,22 @@ def grade_by_model(test_case, output):
     eval_prompt = """
     You are an expert code reviewer. Evaluate this AI-generated solution.
     
-    Task: {task}
-    Solution: {solution}
+    Original Task:
+    <task>
+    {test_case["task"]}
+    </task>
+
+    Solution to Evaluate:
+    <solution>
+    {output}
+    </solution>
+
+    Criteria you should use to evaluate the solution:
+    <criteria>
+    {test_case["solution_criteria"]}
+    </criteria>
     
+    Output Format
     Provide your evaluation as a structured JSON object with:
     - "strengths": An array of 1-3 key strengths
     - "weaknesses": An array of 1-3 key areas for improvement  
