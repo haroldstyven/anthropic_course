@@ -925,6 +925,18 @@ def run_prompt(prompt_inputs):
         4. Use only foods that fit restrictions
         5. List all portion sizes in grams
         6. Keep budget-friendly if mentioned
+        
+        <ideal_input>
+        [Your example input here]
+        </ideal_input>
+
+        <ideal_output>
+        [Your example output here]
+        </ideal_output>
+
+        This example is well-structured, provides detailed information 
+        on food choices and quantities, and aligns with the athlete's 
+        goals and restrictions.
         """
     
     messages = []
