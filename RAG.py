@@ -1,7 +1,7 @@
 import re
 import voyageai
 import math
-from typing import Optional, Any, List, Dict, Tuple, Callable
+from typing import Optional, Any, List, Dict, Tuple, Callable, Protocol
 from collections import Counter
 from dotenv import load_dotenv
 
@@ -340,6 +340,72 @@ class BM25Index:
     def __repr__(self) -> str:
         return f"BM25VectorStore(count={len(self)}, k1={self.k1}, b={self.b}, index_built={self._index_built})"
 
+# Retriever implementation
+class SearchIndex(Protocol):
+    def add_document(self, document: Dict[str, Any]) -> None: ...
+
+    # Added the 'add_documents' method to avoid rate limiting errors from VoyageAI
+    def add_documents(self, documents: List[Dict[str, Any]]) -> None: ...
+
+    def search(
+        self, query: Any, k: int = 1
+    ) -> List[Tuple[Dict[str, Any], float]]: ...
+
+class Retriever:
+    def __init__(self, *indexes: SearchIndex):
+        if len(indexes) == 0:
+            raise ValueError("At least one index must be provided")
+        self._indexes = list(indexes)
+
+    def add_document(self, document: Dict[str, Any]):
+        for index in self._indexes:
+            index.add_document(document)
+
+    # Added the 'add_documents' method to avoid rate limiting errors from VoyageAI
+    def add_documents(self, documents: List[Dict[str, Any]]):
+        for index in self._indexes:
+            index.add_documents(documents)
+
+    def search(
+        self, query_text: str, k: int = 1, k_rrf: int = 60
+    ) -> List[Tuple[Dict[str, Any], float]]:
+        if not isinstance(query_text, str):
+            raise TypeError("Query text must be a string.")
+        if k <= 0:
+            raise ValueError("k must be a positive integer.")
+        if k_rrf < 0:
+            raise ValueError("k_rrf must be non-negative.")
+
+        all_results = [
+            index.search(query_text, k=k * 5) for index in self._indexes
+        ]
+
+        doc_ranks = {}
+        for idx, results in enumerate(all_results):
+            for rank, (doc, _) in enumerate(results):
+                doc_id = id(doc)
+                if doc_id not in doc_ranks:
+                    doc_ranks[doc_id] = {
+                        "doc_obj": doc,
+                        "ranks": [float("inf")] * len(self._indexes),
+                    }
+                doc_ranks[doc_id]["ranks"][idx] = rank + 1
+
+        def calc_rrf_score(ranks: List[float]) -> float:
+            return sum(1.0 / (k_rrf + r) for r in ranks if r != float("inf"))
+
+        scored_docs: List[Tuple[Dict[str, Any], float]] = [
+            (ranks["doc_obj"], calc_rrf_score(ranks["ranks"]))
+            for ranks in doc_ranks.values()
+        ]
+
+        filtered_docs = [
+            (doc, score) for doc, score in scored_docs if score > 0
+        ]
+        filtered_docs.sort(key=lambda x: x[1], reverse=True)
+
+        return filtered_docs[:k]
+
 # Test the chunking functions
 with open("./report.md", "r") as f:
     text = f.read()
@@ -368,6 +434,7 @@ for doc, distance in results:
 
 """
 
+"""
 store_bm25 = BM25Index()
 
 for chunk in chunks:
@@ -379,3 +446,21 @@ results = store_bm25.search("What happened with INC-2023-Q4-011?", 3)
 # Print results
 for doc, distance in results:
     print(distance, "\n", doc["content"][:200], "\n----\n")
+"""
+
+# Create a retriever that combines both the vector index and the BM25 index
+vector_index = VectorIndex(embedding_fn=generate_embedding)
+bm25_index = BM25Index()
+
+retriever = Retriever(vector_index, bm25_index)
+
+# Add documents to the retriever (which will add to both indexes)
+for chunk in chunks:
+    retriever.add_document({"content": chunk})
+
+# Search the retriever
+results = retriever.search("What happened with INC-2023-Q4-011?", 3)
+
+# Print results
+for doc, score in results:
+    print(score, "\n", doc["content"][:200], "\n----\n")
