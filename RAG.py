@@ -1,4 +1,9 @@
 import re
+import voyageai
+from dotenv import load_dotenv
+
+load_dotenv()
+client = voyageai.Client()
 
 # Chunk by a set number of charactesr
 def chunk_by_char(text, chunk_size=150, chunk_overlap=20):
@@ -41,6 +46,11 @@ def chunk_by_section(document_text):
     pattern = r"\n## "
     return re.split(pattern, document_text)
 
+# Generate an embedding for a given text
+def generate_embedding(text, model="voyage-3-large", input_type="query"):
+    result = client.embed([text], model=model, input_type=input_type)
+    return result.embeddings[0]
+
 # Test the chunking functions
 with open("./report.md", "r") as f:
     text = f.read()
@@ -49,4 +59,8 @@ with open("./report.md", "r") as f:
 #chunks = chunk_by_sentence(text)
 chunks = chunk_by_section(text)
 
-[print(chunk + "\n----\n") for chunk in chunks]
+embedding = generate_embedding(chunks[0])
+
+print(f"Embedding for 1st chunk: {embedding}")
+
+#[print(chunk + "\n----\n") for chunk in chunks]

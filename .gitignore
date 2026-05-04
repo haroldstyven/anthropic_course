@@ -12,3 +12,6 @@ wheels/
 .python-version
 pyproject.toml
 uv.lock
+
+# Materials
+*.pdf
