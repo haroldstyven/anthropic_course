@@ -1,2 +1,4 @@
 anthropic
 python-dotenv
+mcp
+prompt-toolkit
